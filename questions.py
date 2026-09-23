@@ -22,12 +22,12 @@ names a target of "4 of 5", and four of three is not a thing.
 """
 
 QUESTIONS = [
-    # {"question": "...", "expects": "..."},
-    {"question": "", "expects": ""},
-    {"question": "", "expects": ""},
-    {"question": "", "expects": ""},
-    {"question": "", "expects": ""},
-    {"question": "", "expects": ""},
+    # {"question": "...", "expects": "..."}, # Questions for Corpora “campus_life” (deafult corpora)
+  {"question": "What are the writing-intensive course requirements for graduation and when should they be checked?", "expects": "In admin_graduation_requirements.txt, you need two writing-intensive courses from different departments checked during your third year."},
+  {"question": "What are the walk-in hours at the health centre?", "expects": "In health_center.txt, walk-in hours are from 8am to 11am."},
+  {"question": "What is the maximum number of hours you can work on campus per week?", "expects": "In money_jobs.txt, the maximum limit is 20 hours a week during the term."},
+  {"question": "How many weekly hours outside of class should you expect for CS 210?", "expects": "In course_cs_210.txt, expect 8 to 10 hours a week outside class."},
+  {"question": "How much does a meal cost at North Kitchen?", "expects": "In dining_north_kitchen.txt, a meal costs one meal swipe or $13.00 cash."},
 ]
 
 # Questions from a different world entirely. Your gate should refuse all five.
