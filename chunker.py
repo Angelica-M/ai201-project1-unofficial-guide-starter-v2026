@@ -97,7 +97,80 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
       - Would splitting on paragraph breaks keep more thoughts intact than
         splitting on a character count?
     """
-    return fallback_split(documents)
+    # return fallback_split(documents) # Old definition of func, before Milestone 3
+    
+    """
+    NEW DEFINIITION (MILESTONE 3): 
+    Split documents into chunks using a recursive structural strategy.
+    Prioritizes paragraph and sentence boundaries to keep rules intact.
+        Why this changes things for your corpus:
+            1. No random middle cuts: It tests paragraph breaks (\n\n) and sentence regex boundaries ([.!?]), satisfying Criterion 4 by keeping thoughts completely whole.
+            2. Eliminates the tail-end bug: The min_chunk_size = 40 filter prevents the machine from outputting meaningless 2-character trailing strings if a file doesn't divide evenly.
+    """
+    import re
+    
+    # Standard targets for campus life (tweak these in your config if needed)
+    max_chunk_size = 500  
+    min_chunk_size = 40   # Drops empty fragments or accidental trailing noise
+    
+    chunks: list[Chunk] = []
+    
+    for doc in documents:
+        # Split document by paragraphs first
+        paragraphs = doc.text.split("\n\n")
+        index = 0
+        
+        for para in paragraphs:
+            para = para.strip()
+            if not para:
+                continue
+                
+            # If paragraph fits comfortably, keep it as an unbroken semantic unit
+            if len(para) <= max_chunk_size:
+                if len(para) >= min_chunk_size:
+                    chunks.append(
+                        Chunk(
+                            text=para,
+                            source=doc.source,
+                            index=index,
+                            produced_by="chunker.py::split_documents",
+                        )
+                    )
+                    index += 1
+            else:
+                # If paragraph is too long, break it carefully into complete sentences
+                sentences = re.split(r'(?<=[.!?])\s+', para)
+                current_chunk = ""
+                
+                for sentence in sentences:
+                    if len(current_chunk) + len(sentence) <= max_chunk_size:
+                        current_chunk += (" " + sentence if current_chunk else sentence)
+                    else:
+                        if len(current_chunk) >= min_chunk_size:
+                            chunks.append(
+                                Chunk(
+                                    text=current_chunk.strip(),
+                                    source=doc.source,
+                                    index=index,
+                                    produced_by="chunker.py::split_documents",
+                                )
+                            )
+                            index += 1
+                        current_chunk = sentence
+                        
+                # Catch remaining sentence buffer
+                if current_chunk and len(current_chunk) >= min_chunk_size:
+                    chunks.append(
+                        Chunk(
+                            text=current_chunk.strip(),
+                            source=doc.source,
+                            index=index,
+                            produced_by="chunker.py::split_documents",
+                        )
+                    )
+                    index += 1
+
+    return chunks
 
 
 def describe(chunks: list[Chunk]) -> str:
