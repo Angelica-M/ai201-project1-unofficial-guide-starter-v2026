@@ -169,7 +169,7 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
                         )
                     )
                     index += 1
-
+                    
     return chunks
 
 

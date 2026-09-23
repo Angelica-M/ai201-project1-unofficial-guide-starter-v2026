@@ -65,3 +65,22 @@ rather than a number. Treat the default as a starting point, not an answer —
 it was set against the corpora above at their shipped chunk settings, and
 changing the chunking moves the distances underneath it. Measuring it
 yourself is the milestone.
+
+# Sample Chuncks 
+Below is the exact output of "python app.py --corpus advice_threads chunks -n 5" after I
+updated "split_documents(documents: list[Document]) -> list[Chunk]" in chunker.py and 
+used in app.py to chunk better:
+
+    94 chunks total. Showing 1, spread across the corpus.
+
+    Paste these into your README under Sample Chunks. The rubric asks
+    for the source file and the function that produced them — both are
+    printed for you below.
+
+    ======================================================================
+    Chunk 1  |  source: thread_bike_commute.txt#0  |  produced by: chunker.py::split_documents
+    ======================================================================
+    THREAD: Is a bike worth it for a 20 minute walk commute?
+
+    For each one, ask: could someone answer a question using only this,
+    without reading what came before or after?
