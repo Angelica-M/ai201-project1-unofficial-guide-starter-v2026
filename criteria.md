@@ -49,7 +49,7 @@ in at least 4 of 5 tries.
 ---
 
 ## 4. Something about your chunks.
-Derived sampled chunks rarely cut off mid-sentence; this ensures the system retrieves standalone, grammatically complete units of information.
+Derived sampled chunks rarely (at least 4 out of 5 times) cut off mid-sentence; this ensures the system retrieves standalone, grammatically complete units of information.
 <!-- YOU WRITE THIS ONE. Something about your chunks.
      How would you know if your chunks were the right size? Name something
      countable or observable.
@@ -60,9 +60,9 @@ Derived sampled chunks rarely cut off mid-sentence; this ensures the system retr
        - "No chunk is shorter than 200 characters, since anything below that
           in my corpus turned out to be a heading with no content under it." -->
 **Why this target:**
-<!-- MY ANSWER: "Derived sampled chunks rarely cut off mid-sentence; this ensures the system retrieves standalone, grammatically complete units of information."
+<!-- MY ANSWER: "Derived sampled chunks rarely (at least 4 out of 5 times) cut off mid-sentence; this ensures the system retrieves standalone, grammatically complete units of information."
      Why this target:
-          Our campus_life corpus relies heavily on precise rules, like the housing credit-hr criteria. If a chunk splits mid-sentence (e.g., separating "ordered by accumulated credit hours first," from its modifier ", and only tie-break randomly"), the embedding model loses the true conditional logic of the policy. However, there is a risk for long-sections of text to appear without sentence boundaries (. , ? , ! ) appearing. The use of "rarely" enables cutting off allows for the occasional split on massive paragraphs but retain a preference for punctuations as a signifying deliminator. -->
+          Our campus_life corpus relies heavily on precise rules, like the housing credit-hr criteria. If a chunk splits mid-sentence (e.g., separating "ordered by accumulated credit hours first," from its modifier ", and only tie-break randomly"), the embedding model loses the true conditional logic of the policy. However, there is a risk for long-sections of text to appear without sentence boundaries (. , ? , ! ) appearing. The use of "rarely" enables cutting off for the occasional split (assumption where 20% or 1 out of 5 will need the sentence-only exception so chunks don't get too large) on massive paragraphs but retain a preference for punctuations as a signifying deliminator. -->
 
 ---
 
