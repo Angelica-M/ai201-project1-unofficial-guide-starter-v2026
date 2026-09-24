@@ -49,7 +49,7 @@ in at least 4 of 5 tries.
 ---
 
 ## 4. Something about your chunks.
-Derived sampled chunks do not cut off mid-sentence; this ensures the system retrieves standalone, grammatically complete units of information.
+Derived sampled chunks rarely cut off mid-sentence; this ensures the system retrieves standalone, grammatically complete units of information.
 <!-- YOU WRITE THIS ONE. Something about your chunks.
      How would you know if your chunks were the right size? Name something
      countable or observable.
