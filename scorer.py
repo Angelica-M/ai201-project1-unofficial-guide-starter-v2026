@@ -50,11 +50,10 @@ def judge(question, expects, answer, results) -> bool:
     """
     
     """ 
-    OPTION METHOD 3: 
+    OPTION METHOD 3 (best balance on performance vs. cost): 
         Use built-in semantic library (meaning search) w/ Python via "rapidfuzz" method import. 
         Score generated answers against the short expected phrase per question.
     """
-    """"""
     # A modest cutoff allows harmless wording differences while keeping a short,
     # unrelated answer from passing just because it shares one common word.
     SIMILARITY_CUTOFF = 80

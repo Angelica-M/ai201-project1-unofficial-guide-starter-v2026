@@ -402,7 +402,7 @@ Real system output for Criterion 3 (Gate stops out-of-corpus questions):
 
 
 ## Verdicts
-<!-- MET or MISSED for each of the five, against the target you wrote last
+<!-- MET or MISSED for each of the 5, against the target you wrote last
      unit — not a new one. Plus a sentence on how you decided. That sentence
      matters most where it was close.
 
@@ -410,17 +410,16 @@ Real system output for Criterion 3 (Gate stops out-of-corpus questions):
      The target has to hold, not show up occasionally.
 
      Milestone 2. -->
-
-| # | Criterion | Verdict | How I decided |
-|---|---|---|---|
-| 1 |  |  |  |
-| 2 |  |  |  |
-| 3 |  |  |  |
-| 4 |  |  |  |
-| 5 |  |  |  |
+A table summary of whether the RAG pipeline's performance success criteria were met is below (find detailed definitions of the 5 criteria in "criteria.md" in this repo): 
+     | # | Criterion | Verdict | How I decided |
+     | --- | --- | --- | --- |
+     | 1 | Retrieved chunk contains the answer | MET | Across all three runs, 5 out of 5 in-scope queries consistently retrieved the ground-truth source files containing the factual answer, exceeding the 4 of 5 target in every run. |
+     | 2 | Every answer names a source | MET | All 15 generated responses across the three runs explicitly cited their source file name in the output text, hitting the 5 of 5 target consistently on every run. |
+     | 3 | Gate stops out-of-corpus questions | MET | The refusal gate successfully identified and blocked 5 out of 5 out-of-scope questions with vector distances above 0.82, exceeding the 4 of 5 target. |
+     | 4 | Chunks contain complete sentences | MET | All retrieved source text blocks across all 5 questions consisted of intact, grammatically complete sentences without truncated text boundaries. |
+     | 5 | In-scope test questions pass (answered and cited sources) | MISSED | The evaluation script `run_eval.py` explicitly registered 0 out of 5 passes across all three runs (`run 1: fail`, `run 2: fail`, `run 3: fail`), failing to hold the required 5 of 5 target. |
 
 ## Diagnoses
-
 <!-- For each miss: which stage caused it, and how. The stage alone isn't
      enough — you need the mechanism.
 
@@ -438,21 +437,31 @@ Real system output for Criterion 3 (Gate stops out-of-corpus questions):
      low, and which one you'd tighten and to what.
 
      Milestone 3. -->
+Diagnosis for MISSED Criterion 5 (In-scope test questions pass (answered and cited sources)):
+     * **Stage (Failure mode within Test Bench):** Generation / Evaluation Harness (specifically `scorer.py::judge`)
+     * **Symptoms (Consequential effect on system's behavior):** The failure across all 5 test questions (0/5 passed across 3 runs) is caused by a formatting mismatch between the generation stage output and the strict string-matching mechanism in run_eval.py. Retrieval was 100% successful—correct files were retrieved with gate-passing distances ($0.2427$ to $0.4342$)—and the model generated 100% factually accurate answers that included source citations. However, the generation stage formats citations naturally at the end or in parentheses (e.g., "Walk-in hours at the health center are from 8am to 11am (health_center.txt)"), whereas run_eval.py evaluates outputs against rigid expects ground-truth strings structured with leading file names (e.g., "In health_center.txt, walk-in hours are from 8am to 11am."). Because the evaluation mechanism requires near-exact syntax alignment, every semantically correct generation was marked as fail.
+     * **Mechanism (Root cause analysis):** The failure across all 5 test questions (0/5 passed across 3 runs) is caused by an overly rigid string-containment check in `scorer.py`. The evaluation function is defined as:
+          ```python
+          def judge(question, expects, answer, results) -> bool:
+               return expects.lower().strip() in answer.lower()
+          ```
+          This logic checks whether the **entire** reference string in `expects` appears verbatim as a contiguous substring within `answer`.
+          For example, for the health center query, `questions.py` sets `expects` to `"In health_center.txt, walk-in hours are from 8am to 11am."`, whereas the LLM generates `"The walk-in hours at the health center are 8am to 11am (from health_center.txt)."`. Although the model's response is 100% factually accurate and cites the correct source, the exact multi-word string from `expects` is not present word-for-word inside `answer`. Because free-form LLM outputs rephrase ideas and reposition citations (e.g., placing `health_center.txt` at the end rather than at the beginning), `expects.lower().strip() in answer.lower()` evaluates to `False` on every attempt, marking every correct response as `fail`.
+     * **How to fix (in theory):** Update `scorer.py::judge` to replace strict substring matching with flexible fact-checking logic. In theory, `judge()` should evaluate two separate conditions:
+          1. **Source Citation:** Verify that the required file name from `expects` (or from `results`) is mentioned in `answer.lower()`.
+          2. **Fact Accuracy:** Check for key factual tokens/phrases (e.g., `"8am"`, `"11am"`) or pass `(expects, answer)` to an LLM-as-a-judge call / semantic embedding similarity check to confirm factual equivalence regardless of word order or sentence structure.
+
 
 ## The Improvement
-
 **What I changed:**
 
 **Why I picked it:**
-
 <!-- Connect it to a specific diagnosis above in one sentence. If you can't,
      you picked a fix because it sounded impressive. -->
 
 ### Run Log — After
-
 <!-- Same format, same five criteria, three runs each.
      `python run_eval.py --label after` -->
-
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
 | 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
@@ -462,7 +471,6 @@ Real system output for Criterion 3 (Gate stops out-of-corpus questions):
 | 5. | | | | | |
 
 **Did it help?**
-
 <!-- Say plainly whether it did, and how you know. If it made things worse,
      say that — a change that backfired, honestly reported, earns full credit
      and is more interesting than one that worked. What matters is that you can
@@ -471,7 +479,6 @@ Real system output for Criterion 3 (Gate stops out-of-corpus questions):
      Milestone 4. -->
 
 ## What's Still Broken
-
 <!-- For each criterion still missed after your fix: what you'd do about it,
      and why you stopped where you did.
 
@@ -481,7 +488,6 @@ Real system output for Criterion 3 (Gate stops out-of-corpus questions):
      Milestone 5. -->
 
 ## What I'd Do Differently
-
 <!-- Knowing what you know now — which of your five criteria would you write
      differently, and why?
 
