@@ -67,18 +67,18 @@ Derived sampled chunks, at a rate no less than 80%, do not cut off mid-sentence;
 
 ---
 
-## 5. System must pass 80% of 5 complex tests by citing sources and providing complete answers
+## 5. System must pass ALL 5 complex, test questions (in-scope of corpus) by citing sources and providing complete answers
 <!-- YOU WRITE THIS ONE TOO. Your choice.
      Pick something you actually care about getting right. It could be about
      speed, about refusals, about a particular kind of question your corpus
      handles badly, about source attribution being correct rather than merely
      present — anything, as long as it names a number or an observable
      outcome. -->
-The system must achieve at least a 4/5 (80%) pass rate across a dedicated test suite of 5 specific complex-process questions (e.g., housing priority ladder eligibility).
+The system must achieve a 5/5 (100%) pass rate across a dedicated test suite of 5 specific complex-process questions (e.g., housing priority ladder eligibility).
      • A query passes only if the response correctly cites source file and returns an accurate, complete answer iexplanation to its corresponding test question (specific to a corpus).
      • A query fails if the response does not cite source file name (in its response) or omits any detail that is required to properly answer its original corresponding test question; output answer is incomplete, vague, or irrelevant.
 **Why this target:**
-For housing, its document (in the corpus campus_life) reveals a tricky nuance: seniority isn't just about year, it's about accumulated credit hours. A basic RAG setup might retrieve the general "Housing" document for a question like "Does taking summer classes help my housing lottery?", but if chunks are too diluted or our embedding space is too broad, the LLM might miss the exact sentence: "a senior who took summer courses reliably beats a senior who didn't." Hence, we need a high-accuracy target here because providing a student with a generic "housing is random" answer when a precise credit-hr exception exists is a critical hallucination for a campus life assistant. 
+For housing, its document (in the corpus campus_life) reveals a tricky nuance: seniority isn't just about year, it's about accumulated credit hours. A basic RAG setup might retrieve the general "Housing" document for a question like "Does taking summer classes help my housing lottery?", but if chunks are too diluted or our embedding space is too broad, the LLM might miss the exact sentence: "a senior who took summer courses reliably beats a senior who didn't." Hence, we need a high-accuracy target here because providing a student with a generic "housing is random" answer when a precise credit-hr exception exists is a critical hallucination for a campus life assistant. For our 5 presented complex tests questions, they are well-defined and clearly stated; a high-fidelity RAG pipeline should be able to accurately interpret and answer all 5 (100% pass rate). 
 
 ---
 
