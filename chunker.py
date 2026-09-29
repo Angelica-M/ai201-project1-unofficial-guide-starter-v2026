@@ -27,6 +27,7 @@ from dataclasses import dataclass
 import config
 from ingest import Document
 
+import re # Used by function split_documents(documents: list[Document]) -> list[Chunk]
 
 @dataclass
 class Chunk:
@@ -69,7 +70,7 @@ def fallback_split(
                 chunks.append(
                     Chunk(
                         text=piece,
-                        source=doc.source,
+                        somurce=doc.source,
                         index=index,
                         produced_by="chunker.py::fallback_split",
                     )
@@ -98,7 +99,6 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
         splitting on a character count?
     """
     # return fallback_split(documents) # Old definition of func, before Milestone 3
-    
     """
     NEW DEFINIITION (MILESTONE 3): 
     Split documents into chunks using a recursive structural strategy.
@@ -106,12 +106,64 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
         Why this changes things for your corpus:
             1. No random middle cuts: It tests paragraph breaks (\n\n) and sentence regex boundaries ([.!?]), satisfying Criterion 4 by keeping thoughts completely whole.
             2. Eliminates the tail-end bug: The min_chunk_size = 40 filter prevents the machine from outputting meaningless 2-character trailing strings if a file doesn't divide evenly.
+    """  
     """
-    import re
-    
+    COMPARISON OF METHOD 1 AND METHOD 2:
+        Source & Origin
+        • AI-Produced Pipeline: Leverages established libraries (e.g., LangChain) via an AI-generated config.
+        • Hand-Rolled Splitter: Custom-written by the developer from scratch using native string manipulation.
+        Logic & Behavior
+        • AI-Produced Pipeline: Recursively splits text down a hierarchy of separators (e.g., paragraphs, sentences, words) until chunks fit the target size.
+        • Hand-Rolled Splitter: Often relies on simpler, linear logic, such as splitting strictly by a fixed character count or a single delimiter.
+        Edge Case Handling
+        • AI-Produced Pipeline: Inherits robust handling for lookbehinds, overlapping tokens, and formatting retention.
+        • Hand-Rolled Splitter: Prone to bugs like splitting words in half or losing structural context.
+        Maintainability
+        • AI-Produced Pipeline: Easy to update by tweaking parameters (e.g., chunk_size, chunk_overlap).
+        • Hand-Rolled Splitter: Harder to maintain because changing the logic requires rewriting the core loop or regex.
+    Overview of Trade-off between the two approaches: 
+        1. Technical Debt: A hand-rolled splitter requires long-term maintenance and unit testing, whereas a pipeline shifts that burden to a trusted library.
+        2. Performance Imbalance: If the write-up claims a smart, recursive semantic split but the code uses a rigid character count, downstream processes (like an LLM or vector database) will receive much lower-quality data chunks.
+    """  
+    """ 
+    METHOD 1 (AI-Produced RecursiveCharacterTextSplitter Pipeline):
+        Standard library pipeline and best practice.
+        1. chunk_size=500 (The Target Size)
+        This tells the pipeline that you want each final chunk to be around 500 characters or fewer.
+            • Why 500? In RAG, 500 characters is a common sweet spot. It is long enough to hold a complete thought (like a paragraph about campus housing rules), but short enough that the vector DB can easily index its meaning.
+        2. chunk_overlap=50 (The Safety Buffer)
+        This controls how many characters look backward into the previous chunk.
+            • If manual code had an overlap of 0, meaning Chunk 2 starts exactly where Chunk 1 ends.
+            • RAG Tip: In real production, developers usually set this to something like 50. This creates a small overlap so that if a vital piece of context spans across the boundary of two chunks, the meaning isn't completely severed.
+        3. separators=["\n\n", " ", ""] (The "Recursive" Superpower)
+        This list is the core logic. Instead of just blindly cutting text at exactly 500 chars, the algorithm tries to keep semantic units together by moving down this list of priority separators from left to right.
+        Here is exactly how the pipeline processes a large document using those separators:
+            • Step 1: Try \n\n (Paragraphs). Pipeline looks at your text and splits it everywhere there is a double line break. It checks the size of those paragraphs. If a paragraph is 400 chars, it stops splitting! It leaves that paragraph completely intact as an unbroken chunk because 400 fits comfortably under your 500-char limit.
+            • Step 2: Fall back to " " (Words). If one paragraph is massive (e.g., 1,200 characters), pipeline realizes 1,200 > 500. It moves to next separator in list: space character (" "). It will carefully slice that massive paragraph at the spaces closest to 500-char mark. Because it splits at spaces, it guarantees it will never slice a word in half.
+            • Step 3: Fall back to "" (Characters). If there is a bizarrely long continuous string of text with absolutely no spaces or paragraphs that exceeds 500 chars, it uses the final fallback "" to split exactly at the character boundary as a last resort.
+    """
+    # Ensure install of "python -m pip install langchain-text-splitters" prior to use
+    from langchain_text_splitters import RecursiveCharacterTextSplitter 
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,
+        chunk_overlap=50,  # Your manual code currently has 50 characters of overlap
+        separators=["\n\n", " ", ""]  # Hierarchical fallback strategy
+    )
+    # Splitting is offloaded entirely to the library pipeline
+    chunks = text_splitter.split_documents(documents)
+
+    """ 
+    METHOD 2 (Hand-Rolled Splitter):
+        Use a smart, two-tier logic (trying paragraphs 1st, then falling back to sentences), explicitly a custom implementation written from scratch.
+        • Manual Loops and State Tracking: Code explicitly manages logic using standard Python loops (for doc in documents, for para in paragraphs), tracks manual index counters, and manually appends items to a list (chunks.append()).
+        • Hardcoded String Manipulation: It uses native Python string functions like .split("\n\n") and .strip() to parse the text.
+        • Custom Sentence Rebuilding: Handles buffer logic manually (current_chunk += ...) to piece together sentences under the max_chunk_size limit.
+        • Self-Attribution: Metadata explicitly hardcodes produced_by="chunker.py::split_documents", tracking its own local file path rather than an external framework.
+    """
+    """
     # Standard targets for campus life (tweak these in your config if needed)
     max_chunk_size = 500  
-    min_chunk_size = 40   # Drops empty fragments or accidental trailing noise
+    min_chunk_size =  1  # Drops empty fragments or accidental trailing noise
     
     chunks: list[Chunk] = []
     
@@ -168,9 +220,9 @@ def split_documents(documents: list[Document]) -> list[Chunk]:
                             produced_by="chunker.py::split_documents",
                         )
                     )
-                    index += 1
-                    
+                    index += 1   
     return chunks
+    """
 
 
 def describe(chunks: list[Chunk]) -> str:
