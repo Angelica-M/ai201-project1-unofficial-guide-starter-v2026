@@ -158,7 +158,16 @@ Here is the data from your terminal output organized into the requested table fo
 | What is the recommended dosage of ibuprofen for a headache? | no | 0.824 | 0.6 |
 | How do I write a for loop in Rust? | no | 0.831 | 0.6 |
 
-CONCLUSION: It looks like the RAG app is hitting a fallback message because the vector distance threshold is too strict. The mathematical average of the best distance values is 0.847, indicating how far your typical query vector sits from your closest existing database embeddings. The gap ("inbetween value") between this average and your 0.6 cutoff is 0.7235. In a RAG app, this represents a potential middle-ground threshold to test for capturing relevant data without letting in too much noise.
+OBSERVATIONS: 
+The gap ("inbetween value") between the average 0.847 and the cutoff 0.6 is 0.247.
+In vector search, Distance means how far apart two pieces of data are.
+• Small Distance (0.0 to 0.2) = Very close together / high semantic match.
+• Large Distance (0.8 to 1.0) = Very far apart / completely unrelated.
+The cutoff is set to 0.6 (RAG system will only accept chunks that have a distance of 0.6 or lower (closer)).
+Because our best queries are at 0.821 to 0.885, they are too far away. The cutoff is not "too strict"—it is actually quite loose, but the queries are completely missing from the database (which makes sense, as "In corpus?" is marked as no).
+
+CONCLUSION: 
+To summarize, the RAG app is correctly returning a fallback message for these queries. Because the questions are not in the corpus, the closest chunks the database can find are mathematically far away (averaging a high distance of 0.847). Since our strict maximum allowable distance cutoff is 0.6, these irrelevant chunks are successfully blocked. The system is performing exactly as it should by refusing to serve unrelated data to out-of-bounds questions.
 
 
 ## How I Used AI
@@ -171,9 +180,9 @@ CONCLUSION: It looks like the RAG app is hitting a fallback message because the 
 
      Milestone 5. -->
 **1.**
-     For How I Used AI, I asked an LLM to explain the mathematical average of all best distance values in 30 words or less, find the average between it and a 0.6 cutoff, and define this final "gap" value in terms of a RAG app. The AI correctly calculated the gap as 0.7235 but only provided a generic explanation of what that threshold meant. Because it missed the broader context of why the system was misbehaving, I edited the response to add a "CONCLUSION" prefix stating that the RAG app was hitting a fallback message because the vector distance threshold was too strict.
+     For How I Used AI, I asked an LLM to find the average of the 5 "best distance" values and calculate the midpoint between that average and our 0.6 cutoff. The AI correctly calculated this value as 0.7235. However, my initial framing mistakenly labeled this midpoint as a "gap" and concluded that our threshold was "too strict." After realizing that a distance of 0.847 indicates completely unrelated data (since the queries were not in our corpus), I corrected the write-up. The final version accurately explains that a 0.6 distance cutoff is actually performing correctly by blocking these out-of-bounds queries from triggering a hallucinated response.
 **2.**
-     In the 2nd instance, I provided the AI with my project requirements and the code for chunker.py, asking it to show me exactly where and how to replace the starter's chunking function with a RecursiveCharacterTextSplitter pipeline. The AI returned the required Python code snippet along with notes explaining how this would prevent random middle cuts and eliminate a trailing 2-character chunk bug using a minimum size filter. However, since the output notes didn't perfectly match my project's context, I edited the AI's notes (code comments) myself to align them with my own observations before putting them in my documentation.
+     In the 2nd instance, I provided the AI with my project requirements and the code for chunker.py, asking it to show me exactly where and how to replace the starter's chunking function with two methods: the 	AI-Produced RecursiveCharacterTextSplitter Pipeline approach and the Hand-Rolled Splitter approach. For both methods, the AI returned the required Python code snippet along with notes explaining its logic. For the AI-Produced Pipeline method, notes explain it prevents random middle cuts using a hierarchical fallback strategy and allows filtering out trailing noise by cleaning the final pipeline output. For the Hand-Rolled Splitter method, notes explain how it prevents random middle cuts and eliminates a trailing 2-character chunk bug using a minimum size filter. However, since the AI-output notes didn't perfectly match my project's context, I edited the AI's notes (code comments) myself to align them with my own observations before putting them in my documentation.
 
 
 <!-- ── Stretch features ─────────────────────────────────────────────────────
@@ -202,16 +211,190 @@ CONCLUSION: It looks like the RAG app is hitting a fallback message because the 
      Milestone 1. -->
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
-|---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
+| --- | --- | --- | --- | --- | --- |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 0/5 | 0/5 | 0/5 | MISSED |
+| 2. Every answer names a source | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Gate stops out-of-corpus questions | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
 | 4. | | | | | |
 | 5. | | | | | |
 
 <!-- Underneath, paste the REAL output for each criterion from one of your
      runs — the actual text your system produced, not a description of it.
      Name the file and function that produced it. -->
+Real system output for Criterion 1 (Retrieved chunk contains the answer): 
+     What are the writing-intensive course requirements for graduation and when should they be checked?
+          run 1: fail  (best distance 0.315)
+          run 2: fail  (best distance 0.315)
+          run 3: fail  (best distance 0.315)
+     What are the walk-in hours at the health centre?
+          run 1: fail  (best distance 0.327)
+          run 2: fail  (best distance 0.327)
+          run 3: fail  (best distance 0.327)
+     What is the maximum number of hours you can work on campus per week?
+          run 1: fail  (best distance 0.271)
+          run 2: fail  (best distance 0.271)
+          run 3: fail  (best distance 0.271)
+     How many weekly hours outside of class should you expect for CS 210?
+          run 1: fail  (best distance 0.243)
+          run 2: fail  (best distance 0.243)
+          run 3: fail  (best distance 0.243)
+     How much does a meal cost at North Kitchen?
+          run 1: fail  (best distance 0.434)
+          run 2: fail  (best distance 0.434)
+          run 3: fail  (best distance 0.434)
+
+Real system output for Criterion 2 (Every answer names a source): 
+     ### What are the writing-intensive course requirements for graduation and when should they be checked? — run 1
+
+     - Best distance: 0.3152 (passed the gate)
+     - Sources retrieved: admin_graduation_requirements.txt, admin_pass_fail_option.txt, course_engl_205_exams.txt, course_engl_205_workload.txt, money_textbooks.txt
+
+     ```
+     The writing-intensive requirement consists of two courses, which must be taken in different departments. You should check this requirement in your third year rather than your fourth. 
+
+     Source: admin_graduation_requirements.txt
+     ```
+
+     ### What are the writing-intensive course requirements for graduation and when should they be checked? — run 2
+
+     - Best distance: 0.3152 (passed the gate)
+     - Sources retrieved: admin_graduation_requirements.txt, admin_pass_fail_option.txt, course_engl_205_exams.txt, course_engl_205_workload.txt, money_textbooks.txt
+
+     ```
+     The writing-intensive requirement consists of two courses, and they must be taken in different departments. This should be checked in your third year rather than your fourth. 
+
+     Source: `admin_graduation_requirements.txt`
+     ```
+
+     ### What are the writing-intensive course requirements for graduation and when should they be checked? — run 3
+
+     - Best distance: 0.3152 (passed the gate)
+     - Sources retrieved: admin_graduation_requirements.txt, admin_pass_fail_option.txt, course_engl_205_exams.txt, course_engl_205_workload.txt, money_textbooks.txt
+
+     ```
+     The writing-intensive requirement consists of two courses, and they must be taken in different departments. You should check this requirement in your third year rather than your fourth. 
+
+     Source: admin_graduation_requirements.txt
+     ```
+
+     ### What are the walk-in hours at the health centre? — run 1
+
+     - Best distance: 0.3272 (passed the gate)
+     - Sources retrieved: course_phys_130.txt, dining_kestrel_commons.txt, dining_north_kitchen.txt, dining_pellew_dining_hall.txt, health_center.txt
+
+     ```
+     The walk-in hours at the health center are 8am to 11am (from health_center.txt).
+     ```
+
+     ### What are the walk-in hours at the health centre? — run 2
+
+     - Best distance: 0.3272 (passed the gate)
+     - Sources retrieved: course_phys_130.txt, dining_kestrel_commons.txt, dining_north_kitchen.txt, dining_pellew_dining_hall.txt, health_center.txt
+
+     ```
+     Walk-in hours at the health center are from 8am to 11am (health_center.txt).
+     ```
+
+     ### What are the walk-in hours at the health centre? — run 3
+
+     - Best distance: 0.3272 (passed the gate)
+     - Sources retrieved: course_phys_130.txt, dining_kestrel_commons.txt, dining_north_kitchen.txt, dining_pellew_dining_hall.txt, health_center.txt
+
+     ```
+     Walk-in hours at the health center are from 8:00 am to 11:00 am (health_center.txt).
+     ```
+
+     ### What is the maximum number of hours you can work on campus per week? — run 1
+
+     - Best distance: 0.2715 (passed the gate)
+     - Sources retrieved: course_cs_210.txt, course_cs_210_workload.txt, course_phys_130.txt, course_stat_150.txt, money_jobs.txt
+
+     ```
+     The maximum number of hours you can work is 20 hours a week during term (money_jobs.txt).
+     ```
+
+     ### What is the maximum number of hours you can work on campus per week? — run 2
+
+     - Best distance: 0.2715 (passed the gate)
+     - Sources retrieved: course_cs_210.txt, course_cs_210_workload.txt, course_phys_130.txt, course_stat_150.txt, money_jobs.txt
+
+     ```
+     The maximum number of hours you can work is 20 hours a week during term (money_jobs.txt).
+     ```
+
+     ### What is the maximum number of hours you can work on campus per week? — run 3
+
+     - Best distance: 0.2715 (passed the gate)
+     - Sources retrieved: course_cs_210.txt, course_cs_210_workload.txt, course_phys_130.txt, course_stat_150.txt, money_jobs.txt
+
+     ```
+     The maximum number of hours you can work is 20 hours a week during term (money_jobs.txt).
+     ```
+
+     ### How many weekly hours outside of class should you expect for CS 210? — run 1
+
+     - Best distance: 0.2427 (passed the gate)
+     - Sources retrieved: course_cs_210.txt, course_cs_210_workload.txt, course_econ_101_workload.txt, course_stat_150.txt, course_stat_150_workload.txt
+
+     ```
+     You should expect 8 to 10 hours a week outside class for CS 210. 
+
+     Source: course_cs_210.txt (and course_cs_210_workload.txt)
+     ```
+
+     ### How many weekly hours outside of class should you expect for CS 210? — run 2
+
+     - Best distance: 0.2427 (passed the gate)
+     - Sources retrieved: course_cs_210.txt, course_cs_210_workload.txt, course_econ_101_workload.txt, course_stat_150.txt, course_stat_150_workload.txt
+
+     ```
+     For CS 210, you should expect 8 to 10 hours a week outside of class. This comes from the documents `course_cs_210.txt` and `course_cs_210_workload.txt`.
+     ```
+
+     ### How many weekly hours outside of class should you expect for CS 210? — run 3
+
+     - Best distance: 0.2427 (passed the gate)
+     - Sources retrieved: course_cs_210.txt, course_cs_210_workload.txt, course_econ_101_workload.txt, course_stat_150.txt, course_stat_150_workload.txt
+
+     ```
+     For CS 210, you should expect 8 to 10 hours a week outside of class. This comes from the documents `course_cs_210.txt` and `course_cs_210_workload.txt`.
+     ```
+
+     ### How much does a meal cost at North Kitchen? — run 1
+
+     - Best distance: 0.4342 (passed the gate)
+     - Sources retrieved: dining_halden_hall.txt, dining_kestrel_commons.txt, dining_north_kitchen.txt, dining_north_kitchen_followup.txt, dining_pellew_dining_hall.txt
+
+     ```
+     A meal at North Kitchen costs one meal swipe, or $13.00 cash (from dining_north_kitchen.txt).
+     ```
+
+     ### How much does a meal cost at North Kitchen? — run 2
+
+     - Best distance: 0.4342 (passed the gate)
+     - Sources retrieved: dining_halden_hall.txt, dining_kestrel_commons.txt, dining_north_kitchen.txt, dining_north_kitchen_followup.txt, dining_pellew_dining_hall.txt
+
+     ```
+     A meal at North Kitchen costs one meal swipe or $13.00 cash (dining_north_kitchen.txt).
+     ```
+
+     ### How much does a meal cost at North Kitchen? — run 3
+
+     - Best distance: 0.4342 (passed the gate)
+     - Sources retrieved: dining_halden_hall.txt, dining_kestrel_commons.txt, dining_north_kitchen.txt, dining_north_kitchen_followup.txt, dining_pellew_dining_hall.txt
+
+     ```
+     A meal at North Kitchen costs one meal swipe or $13.00 cash (dining_north_kitchen.txt).
+     ```
+Real system output for Criterion 3 (Gate stops out-of-corpus questions): 
+     Out-of-scope questions (the gate should refuse these):
+     refused  (best distance 0.821)  What is the capital of Mongolia?
+     refused  (best distance 0.885)  How do I change the oil in a diesel engine?
+     refused  (best distance 0.874)  Who won the 1994 World Cup?
+     refused  (best distance 0.824)  What is the recommended dosage of ibuprofen for a headache?
+     refused  (best distance 0.831)  How do I write a for loop in Rust?
+     -> gate refused 5 of 5
+
 
 ## Verdicts
 
