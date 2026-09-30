@@ -179,10 +179,8 @@ To summarize, the RAG app is correctly returning a fallback message for these qu
      "I used AI to help me code" is not.
 
      Milestone 5. -->
-**1.**
-     For How I Used AI, I asked an LLM to find the average of the 5 "best distance" values and calculate the midpoint between that average and our 0.6 cutoff. The AI correctly calculated this value as 0.7235. However, my initial framing mistakenly labeled this midpoint as a "gap" and concluded that our threshold was "too strict." After realizing that a distance of 0.847 indicates completely unrelated data (since the queries were not in our corpus), I corrected the write-up. The final version accurately explains that a 0.6 distance cutoff is actually performing correctly by blocking these out-of-bounds queries from triggering a hallucinated response.
-**2.**
-     In the 2nd instance, I provided the AI with my project requirements and the code for chunker.py, asking it to show me exactly where and how to replace the starter's chunking function with two methods: the 	AI-Produced RecursiveCharacterTextSplitter Pipeline approach and the Hand-Rolled Splitter approach. For both methods, the AI returned the required Python code snippet along with notes explaining its logic. For the AI-Produced Pipeline method, notes explain it prevents random middle cuts using a hierarchical fallback strategy and allows filtering out trailing noise by cleaning the final pipeline output. For the Hand-Rolled Splitter method, notes explain how it prevents random middle cuts and eliminates a trailing 2-character chunk bug using a minimum size filter. However, since the AI-output notes didn't perfectly match my project's context, I edited the AI's notes (code comments) myself to align them with my own observations before putting them in my documentation.
+**1.** For How I Used AI, I asked an LLM to find the average of the 5 "best distance" values and calculate the midpoint between that average and our 0.6 cutoff. The AI correctly calculated this value as 0.7235. However, my initial framing mistakenly labeled this midpoint as a "gap" and concluded that our threshold was "too strict." After realizing that a distance of 0.847 indicates completely unrelated data (since the queries were not in our corpus), I corrected the write-up. The final version accurately explains that a 0.6 distance cutoff is actually performing correctly by blocking these out-of-bounds queries from triggering a hallucinated response.
+**2.** In the 2nd instance, I provided the AI with my project requirements and the code for chunker.py, asking it to show me exactly where and how to replace the starter's chunking function with two methods: the 	AI-Produced RecursiveCharacterTextSplitter Pipeline approach and the Hand-Rolled Splitter approach. For both methods, the AI returned the required Python code snippet along with notes explaining its logic. For the AI-Produced Pipeline method, notes explain it prevents random middle cuts using a hierarchical fallback strategy and allows filtering out trailing noise by cleaning the final pipeline output. For the Hand-Rolled Splitter method, notes explain how it prevents random middle cuts and eliminates a trailing 2-character chunk bug using a minimum size filter. However, since the AI-output notes didn't perfectly match my project's context, I edited the AI's notes (code comments) myself to align them with my own observations before putting them in my documentation.
 
 
 <!-- ── Stretch features ─────────────────────────────────────────────────────
@@ -208,25 +206,26 @@ To summarize, the RAG app is correctly returning a fallback message for these qu
 
      Milestone 1. -->
 A table summary of RAG pipeline's performance (tested quality of chunks and answers of 10 questions (5 in-scope, 5 out-of-scope)) is below (also find raw terminal output in "results/" dir of this repo): 
-    | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
-    | --- | --- | --- | --- | --- | --- |
-    | 1. Retrieved chunk contains the answer | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
-    | 2. Every answer names a source | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
-    | 3. Gate stops out-of-corpus questions | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
-    | 4. Chunks contain complete sentences | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
-    | 5. In-scope test questions pass (answered and cited sources) | 5 of 5 | 0/5 | 0/5 | 0/5 | MISSED |
+| Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
+| --- | --- | --- | --- | --- | --- |
+| **1. Retrieved chunk contains the answer** | 4 of 5 | 5/5 | 5/5 | 5/5 | **MET** |
+| **2. Every answer names a source** | 5 of 5 | 5/5 | 5/5 | 5/5 | **MET** |
+| **3. Gate stops out-of-corpus questions** | 4 of 5 | 5/5 | 5/5 | 5/5 | **MET** |
+| **4. Chunks contain complete sentences** | 4 of 5 | 5/5 | 5/5 | 5/5 | **MET** |
+| **5. In-scope test questions pass (answered and cited sources)** | 5 of 5 | 0/5 | 0/5 | 0/5 | **MISSED** |
 
 Key Rationale & Findings:
-    • Criterion 1 (Retrieval): 5 of 5 MET. Every in-scope query retrieved its corresponding ground-truth text document (e.g., admin_graduation_requirements.txt, health_center.txt, money_jobs.txt, course_cs_210.txt, dining_north_kitchen.txt).
-    • Criterion 2 (Citations): 5 of 5 MET. All 15 generated responses (5 questions × 3 runs) explicitly cited the retrieved text file inside the answer text.
-    • Criterion 3 (Out-of-Corpus Gate): 5 of 5 MET. The system successfully rejected all 5 out-of-scope questions (Mongolia, diesel engine, World Cup, ibuprofen, Rust for loop) with vector distances $> 0.82$, meeting the target of at least 4 of 5.
-    • Criterion 4 (Chunk Integrity): 5 of 5 MET. Retrieved context blocks consist of clean, complete sentences without mid-sentence cuts or broken text boundary artifacts.
-    • Criterion 5 (Automated Test Pass): 0 of 5 MISSED. run_eval.py explicitly registered fail across all 3 runs for all 5 questions due to the evaluation script comparing exact string outputs or using an overly strict distance threshold check against the expected answer format.
+* **Criterion 1 (Retrieval):** 5 of 5 MET. Every in-scope query retrieved its corresponding ground-truth text document (e.g., admin_graduation_requirements.txt, health_center.txt, money_jobs.txt, course_cs_210.txt, dining_north_kitchen.txt).
+* **Criterion 2 (Citations):** 5 of 5 MET. All 15 generated responses (5 questions × 3 runs) explicitly cited the retrieved text file inside the answer text.
+* **Criterion 3 (Out-of-Corpus Gate):** 5 of 5 MET. The system successfully rejected all 5 out-of-scope questions (Mongolia, diesel engine, World Cup, ibuprofen, Rust for loop) with vector distances $> 0.82$, meeting the target of at least 4 of 5.
+* **Criterion 4 (Chunk Integrity):** 5 of 5 MET. Retrieved context blocks consist of clean, complete sentences without mid-sentence cuts or broken text boundary artifacts.
+* **Criterion 5 (Automated Test Pass):** 0 of 5 MISSED. run_eval.py explicitly registered fail across all 3 runs for all 5 questions due to the evaluation script comparing exact string outputs or using an overly strict distance threshold check against the expected answer format.
 
 <!-- Underneath, paste the REAL output for each criterion from one of your
      runs — the actual text your system produced, not a description of it.
      Name the file and function that produced it. -->
 Real system output for Criterion 1 (Retrieved chunk contains the answer): 
+     
      What are the writing-intensive course requirements for graduation and when should they be checked?
           run 1: fail  (best distance 0.315)
           run 2: fail  (best distance 0.315)
@@ -249,6 +248,7 @@ Real system output for Criterion 1 (Retrieved chunk contains the answer):
           run 3: fail  (best distance 0.434)
 
 Real system output for Criterion 2 (Every answer names a source): 
+     
      ### What are the writing-intensive course requirements for graduation and when should they be checked? — run 1
 
      - Best distance: 0.3152 (passed the gate)
@@ -411,13 +411,13 @@ Real system output for Criterion 3 (Gate stops out-of-corpus questions):
 
      Milestone 2. -->
 A table summary of whether the RAG pipeline's performance success criteria were met is below (find detailed definitions of the 5 criteria in "criteria.md" in this repo): 
-     | # | Criterion | Verdict | How I decided |
-     | --- | --- | --- | --- |
-     | 1 | Retrieved chunk contains the answer | MET | Across all three runs, 5 out of 5 in-scope queries consistently retrieved the ground-truth source files containing the factual answer, exceeding the 4 of 5 target in every run. |
-     | 2 | Every answer names a source | MET | All 15 generated responses across the three runs explicitly cited their source file name in the output text, hitting the 5 of 5 target consistently on every run. |
-     | 3 | Gate stops out-of-corpus questions | MET | The refusal gate successfully identified and blocked 5 out of 5 out-of-scope questions with vector distances above 0.82, exceeding the 4 of 5 target. |
-     | 4 | Chunks contain complete sentences | MET | All retrieved source text blocks across all 5 questions consisted of intact, grammatically complete sentences without truncated text boundaries. |
-     | 5 | In-scope test questions pass (answered and cited sources) | MISSED | The evaluation script `run_eval.py` explicitly registered 0 out of 5 passes across all three runs (`run 1: fail`, `run 2: fail`, `run 3: fail`), failing to hold the required 5 of 5 target. |
+| # | Criterion | Verdict | How I decided |
+| --- | --- | --- | --- |
+| 1 | **Retrieved chunk contains the answer** | MET | Across all three runs, 5 out of 5 in-scope queries consistently retrieved the ground-truth source files containing the factual answer, exceeding the 4 of 5 target in every run. |
+| 2 | **Every answer names a source** | MET | All 15 generated responses across the three runs explicitly cited their source file name in the output text, hitting the 5 of 5 target consistently on every run. |
+| 3 | **Gate stops out-of-corpus questions** | MET | The refusal gate successfully identified and blocked 5 out of 5 out-of-scope questions with vector distances above 0.82, exceeding the 4 of 5 target. |
+| 4 | **Chunks contain complete sentences** | MET | All retrieved source text blocks across all 5 questions consisted of intact, grammatically complete sentences without truncated text boundaries. |
+| 5 | **In-scope test questions pass (answered and cited sources)** | MISSED | The evaluation script `run_eval.py` explicitly registered 0 out of 5 passes across all three runs (`run 1: fail`, `run 2: fail`, `run 3: fail`), failing to hold the required 5 of 5 target. |
 
 ## Diagnoses
 <!-- For each miss: which stage caused it, and how. The stage alone isn't
@@ -438,18 +438,18 @@ A table summary of whether the RAG pipeline's performance success criteria were 
 
      Milestone 3. -->
 Diagnosis for MISSED Criterion 5 (In-scope test questions pass (answered and cited sources)):
-     * **Stage (Failure mode within Test Bench):** Generation / Evaluation Harness (specifically `scorer.py::judge`)
-     * **Symptoms (Consequential effect on system's behavior):** The failure across all 5 test questions (0/5 passed across 3 runs) is caused by a formatting mismatch between the generation stage output and the strict string-matching mechanism in run_eval.py. Retrieval was 100% successful—correct files were retrieved with gate-passing distances ($0.2427$ to $0.4342$)—and the model generated 100% factually accurate answers that included source citations. However, the generation stage formats citations naturally at the end or in parentheses (e.g., "Walk-in hours at the health center are from 8am to 11am (health_center.txt)"), whereas run_eval.py evaluates outputs against rigid expects ground-truth strings structured with leading file names (e.g., "In health_center.txt, walk-in hours are from 8am to 11am."). Because the evaluation mechanism requires near-exact syntax alignment, every semantically correct generation was marked as fail.
-     * **Mechanism (Root cause analysis):** The failure across all 5 test questions (0/5 passed across 3 runs) is caused by an overly rigid string-containment check in `scorer.py`. The evaluation function is defined as:
-          ```python
-          def judge(question, expects, answer, results) -> bool:
-               return expects.lower().strip() in answer.lower()
-          ```
-          This logic checks whether the **entire** reference string in `expects` appears verbatim as a contiguous substring within `answer`.
-          For example, for the health center query, `questions.py` sets `expects` to `"In health_center.txt, walk-in hours are from 8am to 11am."`, whereas the LLM generates `"The walk-in hours at the health center are 8am to 11am (from health_center.txt)."`. Although the model's response is 100% factually accurate and cites the correct source, the exact multi-word string from `expects` is not present word-for-word inside `answer`. Because free-form LLM outputs rephrase ideas and reposition citations (e.g., placing `health_center.txt` at the end rather than at the beginning), `expects.lower().strip() in answer.lower()` evaluates to `False` on every attempt, marking every correct response as `fail`.
-     * **How to fix (in theory):** Update `scorer.py::judge` to replace strict substring matching with flexible fact-checking logic. In theory, `judge()` should evaluate two separate conditions:
-          1. **Source Citation:** Verify that the required file name from `expects` (or from `results`) is mentioned in `answer.lower()`.
-          2. **Fact Accuracy:** Check for key factual tokens/phrases (e.g., `"8am"`, `"11am"`) or pass `(expects, answer)` to an LLM-as-a-judge call / semantic embedding similarity check to confirm factual equivalence regardless of word order or sentence structure.
+* **Stage (Failure mode within Test Bench):** Generation / Evaluation Harness (specifically `scorer.py::judge`)
+* **Symptoms (Consequential effect on system's behavior):** The failure across all 5 test questions (0/5 passed across 3 runs) is caused by a formatting mismatch between the generation stage output and the strict string-matching mechanism in run_eval.py. Retrieval was 100% successful—correct files were retrieved with gate-passing distances ($0.2427$ to $0.4342$)—and the model generated 100% factually accurate answers that included source citations. However, the generation stage formats citations naturally at the end or in parentheses (e.g., "Walk-in hours at the health center are from 8am to 11am (health_center.txt)"), whereas run_eval.py evaluates outputs against rigid expects ground-truth strings structured with leading file names (e.g., "In health_center.txt, walk-in hours are from 8am to 11am."). Because the evaluation mechanism requires near-exact syntax alignment, every semantically correct generation was marked as fail.
+* **Mechanism (Root cause analysis):** The failure across all 5 test questions (0/5 passed across 3 runs) is caused by an overly rigid string-containment check in `scorer.py`. The evaluation function is defined as:
+     ```python
+     def judge(question, expects, answer, results) -> bool:
+          return expects.lower().strip() in answer.lower()
+     ```
+     This logic checks whether the **entire** reference string in `expects` appears verbatim as a contiguous substring within `answer`.
+     For example, for the health center query, `questions.py` sets `expects` to `"In health_center.txt, walk-in hours are from 8am to 11am."`, whereas the LLM generates `"The walk-in hours at the health center are 8am to 11am (from health_center.txt)."`. Although the model's response is 100% factually accurate and cites the correct source, the exact multi-word string from `expects` is not present word-for-word inside `answer`. Because free-form LLM outputs rephrase ideas and reposition citations (e.g., placing `health_center.txt` at the end rather than at the beginning), `expects.lower().strip() in answer.lower()` evaluates to `False` on every attempt, marking every correct response as `fail`.
+* **How to fix (in theory):** Update `scorer.py::judge` to replace strict substring matching with flexible fact-checking logic. In theory, `judge()` should evaluate two separate conditions:
+     1. **Source Citation:** Verify that the required file name from `expects` (or from `results`) is mentioned in `answer.lower()`.
+     2. **Fact Accuracy:** Check for key factual tokens/phrases (e.g., `"8am"`, `"11am"`) or pass `(expects, answer)` to an LLM-as-a-judge call / semantic embedding similarity check to confirm factual equivalence regardless of word order or sentence structure.
 
 
 ## The Improvement
@@ -486,19 +486,19 @@ Here is the completed table based on the output data from Test Bench's (run_eval
 Yes, the change partially helped, as evidenced by the pass rate improving from 0/5 across all runs in the first attempt to a peak of 4/5 in Run 2 (and 2/5 in Runs 1 and 3). Questions 3 (maximum work hours) and 5 (North Kitchen meal cost) moved from complete failures to passing consistently across all three runs, proving that switching to token-set fuzzy matching successfully eliminated false negatives caused by citation placement and minor sentence restructuring. However, the fix did not fully resolve Criterion 5 because the target required a 5/5 pass rate across all three runs, and Question 1 continued to fail every run while Questions 2 and 4 fluctuated between pass and fail due to generative phrasing variance.
 
 Breakdown of Observations: 
-     1. **Retrieved chunk contains the answer (5/5 across all runs):**
-          * For all 5 questions, the vector search successfully retrieved the relevant source documents containing the factual answer in every run (`admin_graduation_requirements.txt`, `health_center.txt`, `money_jobs.txt`, `course_cs_210.txt`/`course_cs_210_workload.txt`, and `dining_north_kitchen.txt`).
-     2. **Every answer names a source (5/5 across all runs):**
-          * Every single generated output across all 3 runs explicitly named/cited the corresponding `.txt` source document in the response text.
-     3. **Gate stops out-of-corpus questions (5/5 across all runs):**
-          * Pre-filled as verified by your evaluation gate.
-     4. **Chunks contain complete sentences (5/5 across all runs):**
-          * All retrieved chunks provided complete, grammatically sound context sentences without truncated fragments or cut-off text.
-     5. **In-scope test questions pass (Terminal Eval Output):**
-          * **Run 1:** 2 passed (Q3, Q5), 3 failed (Q1, Q2, Q4) $\rightarrow$ **2/5**
-          * **Run 2:** 4 passed (Q2, Q3, Q4, Q5), 1 failed (Q1) $\rightarrow$ **4/5**
-          * **Run 3:** 2 passed (Q3, Q5), 3 failed (Q1, Q2, Q4) $\rightarrow$ **2/5**
-          * *Note:* Even though the generated text looks accurate and includes source citations, the evaluation script (`run_eval.py`) strictly checks for exact phrase matches or specific citation formatting variations, causing intermittent test failures on Q1, Q2, and Q4. Since none of the runs achieved 5/5, this target is **NOT MET**.
+1. **Retrieved chunk contains the answer (5/5 across all runs):**
+     * For all 5 questions, the vector search successfully retrieved the relevant source documents containing the factual answer in every run (`admin_graduation_requirements.txt`, `health_center.txt`, `money_jobs.txt`, `course_cs_210.txt`/`course_cs_210_workload.txt`, and `dining_north_kitchen.txt`).
+2. **Every answer names a source (5/5 across all runs):**
+     * Every single generated output across all 3 runs explicitly named/cited the corresponding `.txt` source document in the response text.
+3. **Gate stops out-of-corpus questions (5/5 across all runs):**
+     * Pre-filled as verified by your evaluation gate.
+4. **Chunks contain complete sentences (5/5 across all runs):**
+     * All retrieved chunks provided complete, grammatically sound context sentences without truncated fragments or cut-off text.
+5. **In-scope test questions pass (Terminal Eval Output):**
+     * **Run 1:** 2 passed (Q3, Q5), 3 failed (Q1, Q2, Q4) $\rightarrow$ **2/5**
+     * **Run 2:** 4 passed (Q2, Q3, Q4, Q5), 1 failed (Q1) $\rightarrow$ **4/5**
+     * **Run 3:** 2 passed (Q3, Q5), 3 failed (Q1, Q2, Q4) $\rightarrow$ **2/5**
+     * *Note:* Even though the generated text looks accurate and includes source citations, the evaluation script (`run_eval.py`) strictly checks for exact phrase matches or specific citation formatting variations, causing intermittent test failures on Q1, Q2, and Q4. Since none of the runs achieved 5/5, this target is **NOT MET**.
 
 ## What's Still Broken
 <!-- For each criterion still missed after your fix: what you'd do about it,
@@ -511,8 +511,8 @@ Breakdown of Observations:
 Criterion 5 (In-scope test questions pass) remains missed because relying on a static token-similarity threshold in scorer.py is still too sensitive to natural LLM generation variance. Question 1 (writing-intensive requirements) failed all three runs because the model formatted its citation as markdown code blocks (admin_graduation_requirements.txt) and restructured the explanation, dropping the token alignment score below the cutoff threshold despite providing 100% accurate facts. Questions 2 and 4 fluctuated across runs because small shifts in output length pushed the similarity score right onto the boundary of pass/fail. To fix this permanently, I would replace the lexical string scorer with a two-part deterministic judge: one check that verifies key entity facts (e.g., extracting "20 hours", "8am to 11am") and a regex check verifying the document filename exists in the text. I stopped at fuzzy matching because adjusting the lexical scorer was zero-cost and fast, whereas building an entity-extraction judge required more time than was available before submission.
 
 Breakdown of how this False Negative problem affects system:
-     • The Problem: Lexical metrics treat language like a math equation. If the LLM synonyms a word, changes a markdown layout (like using code blocks [text] vs (text)), or alters sentence structure, a token-similarity scorer flags it as a "fail"—even if the answer is 100% factually accurate.
-     • The Symptom: This creates flaky, fluctuating test benches (as seen in your Questions 2 and 4), where minor, harmless variations in output length cause tests to randomly pass or fail.
+* **The Problem:** Lexical metrics treat language like a math equation. If the LLM synonyms a word, changes a markdown layout (like using code blocks [text] vs (text)), or alters sentence structure, a token-similarity scorer flags it as a "fail"—even if the answer is 100% factually accurate.
+* **The Symptom:** This creates flaky, fluctuating test benches (as seen in your Questions 2 and 4), where minor, harmless variations in output length cause tests to randomly pass or fail.
 
 ## What I'd Do Differently
 <!-- Knowing what you know now — which of your five criteria would you write
@@ -527,7 +527,5 @@ How Proposed Fix is Best Practice to solve this False Negative problem:
      2. Regex Checks: Perfect for rigid structural requirements (like checking if source filenames like admin_graduation_requirements.txt are explicitly cited).
 
 ## How I Used AI
-**1.**
-     In the 1st moment, I asked Gemini to analyze my terminal log output from run_eval.py alongside scorer.py to help spot patterns behind why all 5 in-scope test questions were registering as fail despite retrieving the correct ground-truth chunks and generating factually accurate answers. Gemini identified that scorer.py was executing a rigid substring check (expects.lower().strip() in answer.lower()), which flagged responses as failures whenever the LLM placed citations at the end of sentences or rephrased the text. Instead of accepting the initial surface-level diagnosis that my generation or retrieval stages were broken, I used this pattern analysis to pinpoint the issue strictly within the test harness evaluation logic, preventing unnecessary and counterproductive modifications to my chunking and embedding setup.
-**2.**
-     In the 2nd moment, I asked AI to generate a refactored judge() function using the rapidfuzz library to implement fuzzy string scoring. AI initially returned a snippet using fuzz.partial_ratio with an 80% cutoff; however, because partial_ratio evaluates contiguous character blocks, it still penalized responses where source citations were moved from the beginning of the string to the end. I caught this limitation and manually adjusted the code to use fuzz.token_set_ratio with a 75% cutoff instead, allowing the scorer to isolate matching key tokens regardless of sentence structure or word order while keeping string type-validation guardrails intact.
+**1.** In the 1st moment, I asked Gemini to analyze my terminal log output from run_eval.py alongside scorer.py to help spot patterns behind why all 5 in-scope test questions were registering as fail despite retrieving the correct ground-truth chunks and generating factually accurate answers. Gemini identified that scorer.py was executing a rigid substring check (expects.lower().strip() in answer.lower()), which flagged responses as failures whenever the LLM placed citations at the end of sentences or rephrased the text. Instead of accepting the initial surface-level diagnosis that my generation or retrieval stages were broken, I used this pattern analysis to pinpoint the issue strictly within the test harness evaluation logic, preventing unnecessary and counterproductive modifications to my chunking and embedding setup.
+**2.** In the 2nd moment, I asked AI to generate a refactored judge() function using the rapidfuzz library to implement fuzzy string scoring. AI initially returned a snippet using fuzz.partial_ratio with an 80% cutoff; however, because partial_ratio evaluates contiguous character blocks, it still penalized responses where source citations were moved from the beginning of the string to the end. I caught this limitation and manually adjusted the code to use fuzz.token_set_ratio with a 75% cutoff instead, allowing the scorer to isolate matching key tokens regardless of sentence structure or word order while keeping string type-validation guardrails intact.
