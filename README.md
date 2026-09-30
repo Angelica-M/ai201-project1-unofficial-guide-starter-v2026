@@ -82,15 +82,16 @@ Write down specifics before the meeting. 'It's not working' is hard to act on; '
 ## Sample Answer
 <!-- One complete question and answer, pasted as text, with the source line
      visible. Milestone 4. -->
-For assessing the GROUNDING_INSTRUCTIONS in generate.py, we can see in the below experiment 
-that the current rules outline are sufficient (at least for the question chosen). 
+For assessing the GROUNDING_INSTRUCTIONS in generate.py, we can see in the experiment below that the current rules outline are sufficient (at least for the question chosen). 
+
 **Question:**
-     QUESTION CHOSEN & CORRECT EXPECTED ANSWER:
-          What are the walk-in hours at the health center?
-          In health_center.txt, walk-in hours are from 8am to 11am.
+QUESTION CHOSEN & CORRECT EXPECTED ANSWER:
+* What are the walk-in hours at the health center?
+* In health_center.txt, walk-in hours are from 8am to 11am.
+
 **Answer:**
-python app.py ask "What are the walk-in hours at the health center?" --show-prompt 
-OUTPUT: 
+```python app.py ask "What are the walk-in hours at the health center?" --show-prompt ```
+* OUTPUT: 
 ```
      (best distance 0.327, cutoff 0.6)
 
@@ -161,8 +162,8 @@ Here is the data from your terminal output organized into the requested table fo
 OBSERVATIONS: 
 The gap ("inbetween value") between the average 0.847 and the cutoff 0.6 is 0.247.
 In vector search, Distance means how far apart two pieces of data are.
-• Small Distance (0.0 to 0.2) = Very close together / high semantic match.
-• Large Distance (0.8 to 1.0) = Very far apart / completely unrelated.
+* Small Distance (0.0 to 0.2) = Very close together / high semantic match.
+* Large Distance (0.8 to 1.0) = Very far apart / completely unrelated.
 The cutoff is set to 0.6 (RAG system will only accept chunks that have a distance of 0.6 or lower (closer)).
 Because our best queries are at 0.821 to 0.885, they are too far away. The cutoff is not "too strict"—it is actually quite loose, but the queries are completely missing from the database (which makes sense, as "In corpus?" is marked as no).
 
@@ -180,6 +181,7 @@ To summarize, the RAG app is correctly returning a fallback message for these qu
 
      Milestone 5. -->
 **1.** For How I Used AI, I asked an LLM to find the average of the 5 "best distance" values and calculate the midpoint between that average and our 0.6 cutoff. The AI correctly calculated this value as 0.7235. However, my initial framing mistakenly labeled this midpoint as a "gap" and concluded that our threshold was "too strict." After realizing that a distance of 0.847 indicates completely unrelated data (since the queries were not in our corpus), I corrected the write-up. The final version accurately explains that a 0.6 distance cutoff is actually performing correctly by blocking these out-of-bounds queries from triggering a hallucinated response.
+
 **2.** In the 2nd instance, I provided the AI with my project requirements and the code for chunker.py, asking it to show me exactly where and how to replace the starter's chunking function with two methods: the 	AI-Produced RecursiveCharacterTextSplitter Pipeline approach and the Hand-Rolled Splitter approach. For both methods, the AI returned the required Python code snippet along with notes explaining its logic. For the AI-Produced Pipeline method, notes explain it prevents random middle cuts using a hierarchical fallback strategy and allows filtering out trailing noise by cleaning the final pipeline output. For the Hand-Rolled Splitter method, notes explain how it prevents random middle cuts and eliminates a trailing 2-character chunk bug using a minimum size filter. However, since the AI-output notes didn't perfectly match my project's context, I edited the AI's notes (code comments) myself to align them with my own observations before putting them in my documentation.
 
 
@@ -392,6 +394,7 @@ Real system output for Criterion 2 (Every answer names a source):
      A meal at North Kitchen costs one meal swipe or $13.00 cash (dining_north_kitchen.txt).
      ```
 Real system output for Criterion 3 (Gate stops out-of-corpus questions): 
+     ```
      Out-of-scope questions (the gate should refuse these):
      refused  (best distance 0.821)  What is the capital of Mongolia?
      refused  (best distance 0.885)  How do I change the oil in a diesel engine?
@@ -399,7 +402,7 @@ Real system output for Criterion 3 (Gate stops out-of-corpus questions):
      refused  (best distance 0.824)  What is the recommended dosage of ibuprofen for a headache?
      refused  (best distance 0.831)  How do I write a for loop in Rust?
      -> gate refused 5 of 5
-
+     ```
 
 ## Verdicts
 <!-- MET or MISSED for each of the 5, against the target you wrote last
@@ -521,11 +524,12 @@ Breakdown of how this False Negative problem affects system:
      Milestone 5. -->
 Knowing what I know now, I would completely rewrite Criterion 5 to decouple factual accuracy from string formatting. Instead of measuring whether a generated paragraph matches an expects string, I would define Criterion 5 as two distinct sub-checks: "100% of generated answers contain the required numerical/entity facts" and "100% of generated answers cite a valid source file." Testing entire free-form generated sentences against fixed reference strings creates heavy evaluation noise because LLMs naturally rephrase outputs across non-cached runs. Separating fact extraction from citation validation would create a cleaner test bench that measures real pipeline failures rather than evaluation harness mismatch. This would solve one of the most common anti-patterns in RAG evaluation: using deterministic lexical metrics (like token similarity, BLEU, ROUGE, or exact matching) to evaluate non-deterministic LLM generation.
 
-How Proposed Fix is Best Practice to solve this False Negative problem: 
-     Moving from a fuzzy lexical scorer to a hybrid semantic/deterministic check is is highly effective because it makes our evaluation gates predictable and directly tied to business logic. The hybrid semantic/deterministic check involves: 
-     1. Entity Extraction Check: Verifying critical facts (like numbers, constraints, dates) ensures the information is present, regardless of how the LLM phrased the rest of the sentence.
-     2. Regex Checks: Perfect for rigid structural requirements (like checking if source filenames like admin_graduation_requirements.txt are explicitly cited).
+**How Proposed Fix is Best Practice to solve this False Negative problem:** 
+Moving from a fuzzy lexical scorer to a hybrid semantic/deterministic check is is highly effective because it makes our evaluation gates predictable and directly tied to business logic. The hybrid semantic/deterministic check involves: 
+* 1. Entity Extraction Check: Verifying critical facts (like numbers, constraints, dates) ensures the information is present, regardless of how the LLM phrased the rest of the sentence.
+* 2. Regex Checks: Perfect for rigid structural requirements (like checking if source filenames like admin_graduation_requirements.txt are explicitly cited).
 
 ## How I Used AI
-**1.** In the 1st moment, I asked Gemini to analyze my terminal log output from run_eval.py alongside scorer.py to help spot patterns behind why all 5 in-scope test questions were registering as fail despite retrieving the correct ground-truth chunks and generating factually accurate answers. Gemini identified that scorer.py was executing a rigid substring check (expects.lower().strip() in answer.lower()), which flagged responses as failures whenever the LLM placed citations at the end of sentences or rephrased the text. Instead of accepting the initial surface-level diagnosis that my generation or retrieval stages were broken, I used this pattern analysis to pinpoint the issue strictly within the test harness evaluation logic, preventing unnecessary and counterproductive modifications to my chunking and embedding setup.
-**2.** In the 2nd moment, I asked AI to generate a refactored judge() function using the rapidfuzz library to implement fuzzy string scoring. AI initially returned a snippet using fuzz.partial_ratio with an 80% cutoff; however, because partial_ratio evaluates contiguous character blocks, it still penalized responses where source citations were moved from the beginning of the string to the end. I caught this limitation and manually adjusted the code to use fuzz.token_set_ratio with a 75% cutoff instead, allowing the scorer to isolate matching key tokens regardless of sentence structure or word order while keeping string type-validation guardrails intact.
+**1.** In the 1st event, I asked Gemini to analyze my terminal log output from run_eval.py alongside scorer.py to help spot patterns behind why all 5 in-scope test questions were registering as fail despite retrieving the correct ground-truth chunks and generating factually accurate answers. Gemini identified that scorer.py was executing a rigid substring check (expects.lower().strip() in answer.lower()), which flagged responses as failures whenever the LLM placed citations at the end of sentences or rephrased the text. Instead of accepting the initial surface-level diagnosis that my generation or retrieval stages were broken, I used this pattern analysis to pinpoint the issue strictly within the test harness evaluation logic, preventing unnecessary and counterproductive modifications to my chunking and embedding setup.
+
+**2.** In the 2nd event, I asked AI to generate a refactored judge() function using the rapidfuzz library to implement fuzzy string scoring. AI initially returned a snippet using fuzz.partial_ratio with an 80% cutoff; however, because partial_ratio evaluates contiguous character blocks, it still penalized responses where source citations were moved from the beginning of the string to the end. I caught this limitation and manually adjusted the code to use fuzz.token_set_ratio with a 75% cutoff instead, allowing the scorer to isolate matching key tokens regardless of sentence structure or word order while keeping string type-validation guardrails intact.
